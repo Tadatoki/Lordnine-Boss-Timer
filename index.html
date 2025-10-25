@@ -64,8 +64,77 @@ button:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); 
 }
 .card h3 { margin:0 0 6px; font-size:clamp(16px,1.8vw,20px); }
 
+/* === BOSSES PANEL STYLES === */
+.boss-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.boss-header-text p {
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+/* 🔍 Search input with hover-only clear button */
+#bossSearch {
+  position: relative;
+  width: 180px;
+  padding: 6px 28px 6px 10px; /* space for X */
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.05);
+  color: #e6eef6;
+  font-size: 13px;
+  outline: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+#bossSearch:focus {
+  border-color: var(--accent);
+  background: rgba(255,255,255,0.08);
+}
+
+/* Default: no X visible */
+#bossSearch.has-text {
+  background-image: none;
+  cursor: text;
+}
+
+/* Hover: show clear icon */
+#bossSearch.has-text:hover {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23e6eef6" viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.42 0L12 10.59 7.12 5.7a1 1 0 1 0-1.41 1.42L10.59 12l-4.88 4.88a1 1 0 0 0 1.41 1.41L12 13.41l4.88 4.88a1 1 0 0 0 1.42-1.41L13.41 12l4.89-4.88a1 1 0 0 0 0-1.41z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  cursor: pointer;
+  transition: background-image 0.2s ease;
+}
+
+/* Boss list grid layout */
+.boss-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+  max-height: calc(100vh - 220px);
+  align-content: flex-start; /* keeps cards from stretching */
+}
+
 /* boss list & timers */
-.boss-list { display:grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap:8px; overflow-y:auto; flex:1; padding-right:4px; max-height: calc(100vh - 220px); }
+.boss-list { 
+	display:grid; 
+	grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); 
+	gap:8px; 
+	overflow-y:auto; 
+	flex:1; 
+	padding-right:4px; 
+	max-height: calc(100vh - 220px); 
+}
 .timers {
   display: flex;
   flex-direction: column;
@@ -196,12 +265,17 @@ footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); 
 		  <button id="testWebhook">Test Webhook</button>
 	  </div>
     </header>
-
+<!-- === BOSSES PANEL === -->
     <div class="grid">
       <div class="card">
-        <h3>Bosses</h3>
-        <p style="color:var(--muted);margin-top:4px">Mark it dead — or set a custom killed time.</p>
-        <div class="boss-list" id="bossList"></div>
+        <div class="boss-header">
+		  <div class="boss-header-text">
+			<h3>Bosses</h3>
+			<p>Mark it dead — or set a custom killed time.</p>
+		  </div>
+		  <input type="text" id="bossSearch" placeholder="Search boss...">
+		</div>
+		<div class="boss-list" id="bossList"></div>
 		<footer>Created by: [DFck]Tadatokichi of Ricardo01</footer>
       </div>
 
@@ -580,6 +654,31 @@ document.getElementById('importBtn').addEventListener('click', () => {
     }
   }
   saveTimers();
+
+// === SEARCH FILTER WITH CLEAR BUTTON ===
+const searchInput = document.getElementById('bossSearch');
+
+searchInput.addEventListener('input', e => {
+  const query = e.target.value.toLowerCase().trim();
+  document.querySelectorAll('.boss').forEach(boss => {
+    const name = boss.querySelector('.name').textContent.toLowerCase();
+    boss.style.display = name.includes(query) ? '' : 'none';
+  });
+  searchInput.classList.toggle('has-text', query.length > 0);
+});
+
+// Handle clicking on the X (only when visible)
+searchInput.addEventListener('click', e => {
+  if (searchInput.classList.contains('has-text')) {
+    const rect = searchInput.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    // Detect click on the right area near the X
+    if (clickX > rect.width - 24) {
+      searchInput.value = '';
+      searchInput.dispatchEvent(new Event('input'));
+    }
+  }
+});
 
   // Initialize render
   renderAll();
