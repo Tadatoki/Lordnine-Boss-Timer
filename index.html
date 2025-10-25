@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
     saveTimers();
     renderAll();
     const respawnTime = new Date(endTime).toLocaleString();
-    sendToDiscord(`⚔️ **${boss.name}** defeated!\nRespawn expected at **${respawnTime}**.`);
+    sendToDiscord(`@everyone \n⚔️ **${boss.name}** defeated!\nRespawn expected at **${respawnTime}**.`);
   }
 
   function clearTimer(bossId) {
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     saveTimers();
     renderAll();
     closeTimeModal();
-    sendToDiscord(`>>>@everyone ⚔️ **${boss.name}** manually set.\nRespawn expected at **${new Date(endTime).toLocaleString()}**.`);
+    sendToDiscord(`@everyone \n⚔️ **${boss.name}** manually set.\nRespawn expected at **${new Date(endTime).toLocaleString()}**.`);
   });
 
   // --- Render functions
@@ -392,7 +392,7 @@ setInterval(() => {
     // 5-minute warning
     if (remainingMs <= 5 * 60 * 1000 && remainingMs > 0 && !info.notifiedSoon) {
       const respawnTime = new Date(info.endTime).toLocaleString();
-      sendToDiscord(`>>>@here ⏳ **${boss.name}** will respawn in 5 minutes!\nExpected at **${respawnTime}**.`);
+      sendToDiscord(`@here \n⏳ **${boss.name}** will respawn in 5 minutes!\nExpected at **${respawnTime}**.`);
       info.notifiedSoon = true;
       changed = true;
     }
@@ -400,7 +400,7 @@ setInterval(() => {
     // Respawn reached
     if (info.endTime <= now) {
       const respawnTime = new Date(info.endTime).toLocaleString();
-      sendToDiscord(`>>>@everyone 🕒 **${boss.name}** has respawned!\n(Respawn time: **${respawnTime}**)`);
+      sendToDiscord(`@everyone \n🕒 **${boss.name}** has respawned!\n(Respawn time: **${respawnTime}**)`);
       if (boss.weeklyRespawns) {
         const nextTime = getNextWeeklyRespawn(boss.weeklyRespawns);
         timers[id] = { endTime: nextTime, startedAt: now, weekly: true, notifiedSoon: false };
@@ -441,7 +441,7 @@ setInterval(() => {
 
   testWebhookBtn.addEventListener('click', async () => {
     if (!webhookUrl) { alert('No webhook set yet!'); return; }
-    await sendToDiscord('>>>✅ Test message from **Lord Nine Boss Timer** — webhook working!');
+    await sendToDiscord('✅ Test sage from **Lord Nine Boss Timer** — webhook working!');
     alert('Test message sent to Discord!');
   });
 
