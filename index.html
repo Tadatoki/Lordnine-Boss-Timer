@@ -10,6 +10,7 @@
   --card: #0b1220;
   --muted: #9aa6b2;
   --accent: #7dd3fc;
+  --highlight: #ff0000;
 }
 html, body {
   height: 100%;
@@ -151,7 +152,18 @@ button:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); 
 @keyframes pulseGlow { 0%{box-shadow:0 0 6px rgba(125,211,252,0.35);}50%{box-shadow:0 0 16px rgba(125,211,252,0.8);}100%{box-shadow:0 0 6px rgba(125,211,252,0.35);} }
 
 /* sticky next boss */
-.next { font-size:clamp(14px,1.8vw,18px); color:var(--accent); position:sticky; top:0; background: rgba(11,18,32,0.9); backdrop-filter: blur(4px); padding:6px 10px; border-radius:8px; z-index:50; }
+.next {
+	font-size:clamp(14px,1.8vw,18px); 
+	font-weight: bold;
+	color:var(--highlight); position:sticky; 
+	top:0; 
+	background: rgba(11,18,32,0.9); 
+	backdrop-filter: blur(4px); 
+	padding:6px 10px; 
+	border-radius:8px; 
+	z-index:50;
+	text-shadow: 0 0 8px red, 0 0 16px red;
+}
 
 /* footer */
 footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); text-align:center; }
