@@ -177,11 +177,12 @@ footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); 
     <header>
       <h1>LORDNINE FIELD BOSS TIMER</h1>
       <div class="controls">
-        <button id="resetAll">Reset All Timers</button>
-        <button id="exportBtn">Export JSON</button>
-        <button id="setWebhook">Set Webhook URL</button>
-        <button id="testWebhook">Test Webhook</button>
-      </div>
+		  <button id="resetAll">Reset All Timers</button>
+		  <button id="importBtn">Import JSON</button>
+		  <button id="exportBtn">Export JSON</button>
+		  <button id="setWebhook">Set Webhook URL</button>
+		  <button id="testWebhook">Test Webhook</button>
+	  </div>
     </header>
 
     <div class="grid">
@@ -514,6 +515,33 @@ setInterval(() => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'boss_timers.json'; a.click(); URL.revokeObjectURL(url);
   });
+
+	// --- Import JSON ---
+document.getElementById('importBtn').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try {
+        const imported = JSON.parse(evt.target.result);
+        if (typeof imported !== 'object' || imported === null) throw new Error();
+        if (!confirm('Import this data and overwrite existing timers?')) return;
+        timers = imported;
+        saveTimers();
+        renderAll();
+        alert('Timers imported successfully!');
+      } catch {
+        alert('Invalid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+});
 
   setWebhookBtn.addEventListener('click', () => {
     const url = prompt('Enter your Discord Webhook URL:', webhookUrl || '');
