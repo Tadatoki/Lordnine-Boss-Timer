@@ -530,6 +530,16 @@ setInterval(() => {
     alert('Test message sent to Discord!');
   });
 
+  
+  // --- Auto-activate weekly spawn bosses ---
+  for (const boss of BOSSES) {
+    if (boss.weeklyRespawns && !timers[boss.id]) {
+      const nextTime = getNextWeeklyRespawn(boss.weeklyRespawns);
+      timers[boss.id] = { endTime: nextTime, startedAt: Date.now(), weekly: true, notifiedSoon: false };
+    }
+  }
+  saveTimers();
+
   // Initialize render
   renderAll();
 
