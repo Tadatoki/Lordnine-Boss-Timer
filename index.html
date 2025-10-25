@@ -45,6 +45,17 @@ button:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); 
 
 /* layout */
 .grid { display:grid; grid-template-columns: 2fr 1fr; gap:16px; flex:1; min-height:0; overflow:visible; }
+
+/* Make boss and timer cards equal height */
+.grid {
+  align-items: stretch;
+}
+
+.grid > .card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 .card {
   background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   border-radius:12px; border:1px solid rgba(255,255,255,0.03);
@@ -54,20 +65,83 @@ button:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); 
 
 /* boss list & timers */
 .boss-list { display:grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap:8px; overflow-y:auto; flex:1; padding-right:4px; max-height: calc(100vh - 220px); }
-.timers { display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; padding-right:4px; max-height: calc(100vh - 220px); }
+.timers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 4px;
+  max-height: calc(100vh - 220px);
+}
+
+.card:has(#timers) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.card:has(#timers) footer {
+  flex-shrink: 0;
+  margin-top: auto;
+}
 
 /* boss row */
 .boss {
-  display:flex; align-items:center; justify-content:space-between; padding:10px;
-  border-radius:8px; background: rgba(255,255,255,0.02); gap:8px; min-width:0;
-  opacity: 0; transform: translateY(6px); animation: fadeInItem .35s ease forwards;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 @keyframes fadeInItem { to { opacity:1; transform: translateY(0); } }
-.boss .meta { display:flex; flex-direction:column; flex:1; min-width:0; }
-.boss .name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:clamp(13px,1.5vw,15px); }
-.boss .sub { font-size:clamp(11px,1.2vw,13px); color:var(--muted); }
-.boss .buttons { display:flex; justify-content:flex-end; gap:6px; flex-shrink:0; flex-wrap:wrap; min-width:180px; }
-.boss button { flex:1; padding:6px 8px; min-width:60px; font-size:13px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); }
+.boss .meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 180px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.boss .name,
+.boss .sub {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: keep-all;
+}
+
+.boss .name {
+  font-weight: 600;
+  font-size: clamp(13px, 1.4vw, 15px);
+}
+
+.boss .sub {
+  font-size: clamp(11px, 1.1vw, 13px);
+  color: var(--muted);
+}
+.boss .buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-width: 140px;
+}
+.boss button {
+  flex: 1 1 auto;
+  padding: 6px 8px;
+  min-width: 70px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
 .boss button:hover { background: rgba(255,255,255,0.08); }
 .boss .killBtn.active { border-color:var(--accent); box-shadow:0 0 10px var(--accent); color:var(--accent); }
 
@@ -83,7 +157,18 @@ button:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); 
 footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); text-align:center; }
 
 /* responsive */
-@media (max-width:900px) { .grid { grid-template-columns: 1fr; } .boss-list { grid-template-columns: 1fr; } }
+@media (max-width:900px) { .grid { grid-template-columns: 1fr; }
+
+/* Make boss and timer cards equal height */
+.grid {
+  align-items: stretch;
+}
+
+.grid > .card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+} .boss-list { grid-template-columns: 1fr; } }
 @media (max-width:600px) { body { padding:8px; } .controls { justify-content:center; } button { padding:6px 10px; } }
   </style>
 </head>
@@ -308,13 +393,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="sub">Respawn: ${
             b.weeklyRespawns
               ? b.weeklyRespawns.map(r => `${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][r.day]} ${String(r.hour).padStart(2,'0')}:${String(r.minute).padStart(2,'0')}`).join(', ')
-              : Math.floor(b.respawn/60) + ' min'
+              : (b.respawn / 3600) + ' hr'
           }</div>
         </div>
         <div class="buttons">
           <button data-id="${b.id}" class="killBtn ${isActive ? 'active' : ''}">${isActive ? 'Killed' : 'Mark Dead'}</button>
           <button data-id="${b.id}" class="setTimeBtn">Set Time</button>
-          ${isActive ? `<button data-id="${b.id}" class="clearBtn">Clear</button>` : ''}
+          
         </div>
       `;
       bossListEl.appendChild(node);
