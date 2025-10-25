@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
       node.className = 'timer' + (remaining === 0 ? ' ready' : '');
       node.innerHTML = `
         <div>
-          <div style="font-weight:600">${e.boss.name}</div>
+          <div style="font-size:10px;font-weight:600">${e.boss.name}</div>
           <div style="font-size:12px;color:var(--muted)">Spawn: ${new Date(e.info.endTime).toLocaleString()}</div>
         </div>
         <div>
