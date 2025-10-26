@@ -669,7 +669,7 @@ settingsMenu.querySelectorAll('button').forEach(btn => {
     }
     const soon = upcoming[0];
     const seconds = Math.round((soon.endTime - Date.now()) / 1000);
-    nextBossEl.textContent = `${soon.boss.name} (${formatSec(Math.max(0, seconds))}) `;
+    nextBossEl.textContent = `${soon.boss.name}\n[${formatSec(Math.max(0, seconds))}] `;
   }
 
   function renderAll() {
