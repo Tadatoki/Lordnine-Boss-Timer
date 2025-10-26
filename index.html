@@ -321,10 +321,15 @@ footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); 
   background: rgba(255,255,255,0.02);
   transition: background 0.2s;
   cursor: pointer;
+  white-space: nowrap;        /* keeps text on one line */
+  width: fit-content;         /* auto-adjust width to text */
+  align-self: flex-start;     /* align neatly inside dropdown */
+  min-width: 100%;            /* fills dropdown width if text is shorter */
 }
 
 #settingsMenu button:hover {
   background: rgba(255,255,255,0.08);
+  transform: scale(1.02);
 }
 
   </style>
@@ -341,7 +346,7 @@ footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); 
       <button id="resetAll">Reset All Timers</button>
       <button id="importBtn">Import JSON</button>
       <button id="exportBtn">Export JSON</button>
-      <button id="setWebhook">Set Webhook URL</button>
+      <button id="setWebhook">Discord Webhook URL</button>
       <button id="testWebhook">Test Webhook</button>
     </div>
   </div>
