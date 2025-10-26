@@ -251,20 +251,102 @@ footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); 
   height: 100%;
 } .boss-list { grid-template-columns: 1fr; } }
 @media (max-width:600px) { body { padding:8px; } .controls { justify-content:center; } button { padding:6px 10px; } }
+
+/* === SETTINGS DROPDOWN === */
+.settings {
+  position: relative;
+}
+
+/* Settings button */
+#settingsBtn {
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#settingsBtn:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+/* Gear icon only rotates */
+.gear-icon {
+  display: inline-block;
+  transition: transform 0.4s ease;
+}
+
+.gear-icon.rotating {
+  transform: rotate(90deg);
+}
+
+/* Dropdown menu (hidden by default) */
+#settingsMenu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 120%;
+  background: rgba(15,23,36,0.95);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 999;
+  min-width: 180px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Show state */
+#settingsMenu.show {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Individual menu buttons */
+#settingsMenu button {
+  text-align: left;
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.02);
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+#settingsMenu button:hover {
+  background: rgba(255,255,255,0.08);
+}
+
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>LORDNINE FIELD BOSS TIMER</h1>
-      <div class="controls">
-		  <button id="resetAll">Reset All Timers</button>
-		  <button id="importBtn">Import JSON</button>
-		  <button id="exportBtn">Export JSON</button>
-		  <button id="setWebhook">Set Webhook URL</button>
-		  <button id="testWebhook">Test Webhook</button>
-	  </div>
-    </header>
+  <h1>LORDNINE FIELD BOSS TIMER</h1>
+  <div class="settings">
+    <button id="settingsBtn">
+      <span class="gear-icon">⚙️</span> Settings
+    </button>
+    <div class="settings-menu" id="settingsMenu">
+      <button id="resetAll">Reset All Timers</button>
+      <button id="importBtn">Import JSON</button>
+      <button id="exportBtn">Export JSON</button>
+      <button id="setWebhook">Set Webhook URL</button>
+      <button id="testWebhook">Test Webhook</button>
+    </div>
+  </div>
+</header>
+
 <!-- === BOSSES PANEL === -->
     <div class="grid">
       <div class="card">
@@ -302,6 +384,47 @@ footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); 
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+// === SETTINGS DROPDOWN LOGIC ===
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsMenu = document.getElementById('settingsMenu');
+const gearIcon = settingsBtn.querySelector('.gear-icon');
+
+// Ensure hidden on load
+settingsMenu.classList.remove('show');
+settingsMenu.style.display = 'none';
+
+settingsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isVisible = settingsMenu.classList.contains('show');
+  if (isVisible) {
+    gearIcon.classList.remove('rotating');
+    settingsMenu.classList.remove('show');
+    setTimeout(() => (settingsMenu.style.display = 'none'), 200);
+  } else {
+    settingsMenu.style.display = 'flex';
+    requestAnimationFrame(() => settingsMenu.classList.add('show'));
+    gearIcon.classList.add('rotating');
+  }
+});
+
+document.addEventListener('click', () => {
+  if (settingsMenu.classList.contains('show')) {
+    settingsMenu.classList.remove('show');
+    gearIcon.classList.remove('rotating');
+    setTimeout(() => (settingsMenu.style.display = 'none'), 200);
+  }
+});
+
+// Hide dropdown after clicking a menu item
+settingsMenu.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    settingsMenu.classList.remove('show');
+    gearIcon.classList.remove('rotating');
+    setTimeout(() => (settingsMenu.style.display = 'none'), 200);
+  });
+});
+
   const STORAGE_KEY = 'ln_boss_timers_v2';
   const WEBHOOK_KEY = 'ln_discord_webhook';
   let timers = loadTimers();
