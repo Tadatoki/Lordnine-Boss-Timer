@@ -1,391 +1,609 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lord Nine Field Boss Timer</title>
-  <style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lord Nine Field Boss Timer</title>
+<style>
 :root {
   --bg: #0f1724;
   --card: #0b1220;
   --muted: #9aa6b2;
-  --accent: #7dd3fc;
-  --highlight: #ff0000;
+  --highlight: #7dd3fc;
+  --accent: #00ffff;
+  --danger: #ff4d4d;
+  --success: #32ff7e;
+  --shadow: 0 0 15px rgba(0,255,255,0.3);
 }
+
 html, body {
   height: 100%;
   margin: 0;
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-  background: linear-gradient(180deg, #071029 0%, #0e1724 100%);
-  color: #e6eef6;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 16px;
-  overflow: hidden;
-  animation: fadeInBody 0.5s ease forwards;
+  font-family: 'Consolas', 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: white;
+  overflow: hidden; /* prevent full page scroll */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-@keyframes fadeInBody { from { opacity: 0; transform: translateY(8px);} to {opacity:1; transform:translateY(0);} }
-.wrap { width: 100%; max-width: 1200px; display:flex; flex-direction:column; height:100%; overflow:hidden; }
 
-/* sticky header */
+/* ===== GAMER BACKGROUND ===== */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0,255,255,0.05) 1px, transparent 1px);
+  background-size: 80px 80px;
+  z-index: 0;
+  animation: gridMove 20s linear infinite;
+  pointer-events:none;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0,255,255,0.06) 0%, transparent 70%);
+  mix-blend-mode: overlay;
+  z-index: 0;
+  animation: pulseAura 6s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@keyframes gridMove {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 80px 80px, 80px 80px; }
+}
+@keyframes pulseAura {
+  0% { opacity: 0.25; transform: scale(1); }
+  100% { opacity: 0.55; transform: scale(1.03); }
+}
+
+.wrap, header, .card, footer, .next {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== HEADER ===== */
 header {
-  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;
-  margin-bottom:12px; position:sticky; top:0;
-  background: rgba(15,23,36,0.9); backdrop-filter: blur(6px);
-  padding:8px 12px; border-radius:10px; z-index:100;
-}
-h1 { font-size: clamp(20px,2.2vw,28px); margin:0; }
-.controls { display:flex; flex-wrap:wrap; gap:8px; }
-button {
-  background:transparent; border:1px solid rgba(255,255,255,0.06); padding:8px 12px; border-radius:8px;
-  color:inherit; cursor:pointer; font-size:clamp(12px,1.3vw,14px);
-  transition: background .2s ease, transform .12s ease;
-}
-button:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
-
-/* layout */
-.grid { display:grid; grid-template-columns: 2fr 1fr; gap:16px; flex:1; min-height:0; overflow:visible; }
-
-/* Make boss and timer cards equal height */
-.grid {
-  align-items: stretch;
-}
-
-.grid > .card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-.card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius:12px; border:1px solid rgba(255,255,255,0.03);
-  display:flex; flex-direction:column; padding:12px; min-height:0; overflow:visible; height:100%;
-}
-.card h3 { margin:0 0 6px; font-size:clamp(16px,1.8vw,20px); }
-
-/* === BOSSES PANEL STYLES === */
-.boss-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 8px;
-  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
+h1 { font-size: 1.4rem; margin: 0; color: var(--accent); text-shadow: 0 0 10px var(--accent); }
 
-.boss-header-text p {
-  color: var(--muted);
-  margin: 4px 0 0;
-}
-
-/* 🔍 Search input with hover-only clear button */
-#bossSearch {
+/* ===== SETTINGS MENU ===== */
+#settingsBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
   position: relative;
-  width: 180px;
-  padding: 6px 28px 6px 10px; /* space for X */
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.05);
+  padding: 6px;
+}
+.gear-icon {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 0 6px var(--accent));
+  transition: transform 0.3s ease;
+}
+.gear-icon.rotating { animation: rotateGear 1s linear infinite; }
+@keyframes rotateGear { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+#settingsMenu {
+  position: absolute;
+  right: 10px;
+  top: 48px;
+  background: rgba(15,23,36,0.95);
+  border: 1px solid rgba(0,255,255,0.12);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  opacity: 0;
+  transform: translateY(-6px);
+  min-width: 160px;
+  z-index: 30;
+}
+#settingsMenu.show { display:flex; opacity:1; transform:translateY(0); }
+#settingsMenu button {
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(0,255,255,0.12);
   color: #e6eef6;
-  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+#settingsMenu button:hover { background: rgba(0,255,255,0.06); transform: translateX(4px); }
+
+/* ===== SEARCH ===== */
+#bossSearch {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,255,255,0.12);
+  background: rgba(11, 18, 32, 0.85);
+  color: white;
   outline: none;
-  transition: background 0.2s, border-color 0.2s;
+  transition: all 0.18s;
+  width: 220px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23e6eef6" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path d="M21 20l-5.7-5.7a7 7 0 1 0-1.4 1.4L20 21zM4 10a6 6 0 1 1 12 0a6 6 0 0 1-12 0z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}
+#bossSearch.has-text {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23e6eef6" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path d="M18.3 5.71L12 12.01l-6.3-6.3l-1.4 1.42l6.29 6.29l-6.29 6.29l1.4 1.42l6.3-6.3l6.29 6.3l1.42-1.42l-6.3-6.29l6.3-6.3z"/></svg>');
+}
+
+/* ===== MAIN LAYOUT ===== */
+.wrap {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: calc(100vh - 64px);
+  box-sizing: border-box;
+}
+
+/* card baseline */
+.card {
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 10px;
+}
+
+/* === NEXT BOSS PANEL — FINAL VERSION WITH PULSE + FLASH === */
+#nextBoss {
+  flex: 0 0 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+  white-space: pre-line;
+  line-height: 1.4;
+
+  font-family: 'Orbitron', 'Consolas', sans-serif;
+  background: linear-gradient(180deg, rgba(11,18,32,0.9), rgba(8,12,18,0.7));
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 0 18px rgba(0,255,255,0.25);
+
+  animation: nextPanelPulse 3s ease-in-out infinite;
+}
+
+/* Boss name text */
+#nextBoss .boss-name {
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 14px var(--accent), 0 0 28px rgba(0,255,255,0.5);
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+/* Flash effect when name changes */
+#nextBoss .boss-name.flash {
+  animation: bossFlash 0.6s ease;
+}
+
+/* Timer text */
+#nextBoss .time-remaining {
+  font-size: clamp(14px, 1.4vw, 18px);
+  color: #b8faff;
+  text-shadow: 0 0 6px rgba(0,255,255,0.3);
+  font-weight: 600;
+}
+
+/* === ANIMATIONS === */
+@keyframes nextPanelPulse {
+  0%   { box-shadow: 0 0 14px rgba(0,255,255,0.18), 0 0 28px rgba(0,255,255,0.1); }
+  50%  { box-shadow: 0 0 22px rgba(0,255,255,0.35), 0 0 42px rgba(0,255,255,0.25); }
+  100% { box-shadow: 0 0 14px rgba(0,255,255,0.18), 0 0 28px rgba(0,255,255,0.1); }
+}
+
+@keyframes bossFlash {
+  0%   { color: #fff; text-shadow: 0 0 30px #fff, 0 0 60px var(--accent); transform: scale(1.05); }
+  50%  { color: var(--accent); transform: scale(1.1); }
+  100% { color: var(--accent); text-shadow: 0 0 14px var(--accent), 0 0 28px rgba(0,255,255,0.5); transform: scale(1); }
+}
+
+/* ===== PANELS ===== */
+.panel {
+  border: 1px solid rgba(0,255,255,0.08);
+  box-shadow: 0 0 18px rgba(0,255,255,0.08), inset 0 0 6px rgba(0,255,255,0.03);
+  background: rgba(11,18,32,0.72);
+  border-radius: 12px;
+  transition: transform 0.14s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.panel:hover { transform: translateY(-3px); box-shadow: 0 0 28px rgba(0,255,255,0.12); }
+.panel-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(0,255,255,0.12);
+  border-bottom: 1px solid rgba(0,255,255,0.03);
+  margin: 0;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(255,255,255,0.00));
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+/* === BOSS LIST PANEL HEADER === */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px 0 14px;
+}
+
+.panel-header .panel-title {
+  margin: 0;
+}
+
+#bossSearch {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,255,255,0.12);
+  background: rgba(11,18,32,0.85);
+  color: white;
+  outline: none;
+  transition: all 0.18s;
+  width: 160px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23e6eef6" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path d="M21 20l-5.7-5.7a7 7 0 1 0-1.4 1.4L20 21zM4 10a6 6 0 1 1 12 0a6 6 0 0 1-12 0z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}
+
+#bossSearch.has-text {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23e6eef6" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path d="M18.3 5.71L12 12.01l-6.3-6.3l-1.4 1.42l6.29 6.29l-6.29 6.29l1.4 1.42l6.3-6.3l6.29 6.3l1.42-1.42l-6.3-6.29l6.3-6.3z"/></svg>');
 }
 
 #bossSearch:focus {
   border-color: var(--accent);
-  background: rgba(255,255,255,0.08);
+  box-shadow: 0 0 10px rgba(0,255,255,0.3);
 }
 
-/* Default: no X visible */
-#bossSearch.has-text {
-  background-image: none;
-  cursor: text;
-}
 
-/* Hover: show clear icon */
-#bossSearch.has-text:hover {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23e6eef6" viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.42 0L12 10.59 7.12 5.7a1 1 0 1 0-1.41 1.42L10.59 12l-4.88 4.88a1 1 0 0 0 1.41 1.41L12 13.41l4.88 4.88a1 1 0 0 0 1.42-1.41L13.41 12l4.89-4.88a1 1 0 0 0 0-1.41z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 14px;
-  cursor: pointer;
-  transition: background-image 0.2s ease;
-}
-
-/* Boss list grid layout */
-.boss-list {
+/* === PERFECTLY ALIGNED PANELS (FINAL TUNED VERSION) === */
+.panel-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 8px;
-  overflow-y: auto;
+  grid-template-columns: 1.2fr 1fr; /* Left = boss list, Right = next+timers */
+  gap: 18px;
   flex: 1;
-  padding-right: 4px;
-  max-height: calc(100vh - 220px);
-  align-content: flex-start; /* keeps cards from stretching */
+  height: calc(100vh - 100px); /* fills nearly full height */
+  box-sizing: border-box;
+  margin-bottom: 20px; /* window bottom margin */
 }
 
-/* boss list & timers */
-.boss-list { 
-	display:grid; 
-	grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); 
-	gap:8px; 
-	overflow-y:auto; 
-	flex:1; 
-	padding-right:4px; 
-	max-height: calc(100vh - 220px); 
-}
-.timers {
+/* Left panel full height with tiny offset fix */
+.left-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  padding-right: 4px;
-  max-height: calc(100vh - 220px);
+  height: calc(100% - 21px); /* shortens slightly to match right panel */
+  min-height: 0;
 }
 
-.card:has(#timers) {
+/* Right side layout */
+.right-side {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  gap: 14px;
 }
 
-.card:has(#timers) footer {
-  flex-shrink: 0;
-  margin-top: auto;
+/* Fixed Next Boss height and centered text */
+#nextBoss {
+  flex: 0 0 80px; /* consistent size */
+  display: flex;
+  align-items: center;   /* vertical center */
+  justify-content: center; /* horizontal center */
+  text-align: center;    /* multiline center */
+  white-space: pre-line;
+  line-height: 1.4;
 }
 
-/* boss row */
+/* Active Timer panel fills remaining height exactly */
+.right-side .panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Scrollable content areas */
+#bossList,
+#timers {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  min-height: 0;
+}
+
+/* ===== SCROLLABLE PANELS ===== */
+#bossList, #timers {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: block;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) rgba(11,18,32,0.6);
+}
+
+/* Fade edges inside scroll area */
+#bossList::before, #bossList::after,
+#timers::before, #timers::after {
+  content: "";
+  position: sticky;
+  height: 18px;
+  left: 0; right: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+#bossList::before, #timers::before { top: 0; background: linear-gradient(to bottom, rgba(11,18,32,0.9), transparent); }
+#bossList::after, #timers::after { bottom: 0; background: linear-gradient(to top, rgba(11,18,32,0.9), transparent); }
+
+/* ===== CUSTOM SCROLLBAR ===== */
+#bossList::-webkit-scrollbar, #timers::-webkit-scrollbar { width: 10px; }
+#bossList::-webkit-scrollbar-thumb, #timers::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00ffff, #00a0ff);
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(0,200,255,0.18);
+}
+#bossList::-webkit-scrollbar-track, #timers::-webkit-scrollbar-track {
+  background: rgba(11,18,32,0.6);
+  border-radius: 10px;
+}
+.right-side .panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0; /* critical for flexbox scroll fix */
+}
+
+/* ===== BOSS ROWS (dynamically generated) ===== */
 .boss {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
   gap: 12px;
-  flex-wrap: wrap;
-  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.05));
+  border: 1px solid rgba(255,255,255,0.02);
 }
-@keyframes fadeInItem { to { opacity:1; transform: translateY(0); } }
+
+/* === WEEKLY BOSS STYLE (NO GLOW, UNIQUE FONT COLOR) === */
+.boss.weekly {
+  border: 1px solid rgba(0,255,255,0.1);
+  background: linear-gradient(180deg, rgba(0,255,255,0.02), rgba(0,0,0,0.15));
+}
+
+.boss.weekly .name {
+  color: #4efcff;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(0,255,255,0.25);
+}
+
+.boss.weekly .sub {
+  color: #a7faff;
+}
+
+
+
 .boss .meta {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-width: 180px;
-  max-width: 100%;
-  overflow: hidden;
+  min-width: 0;
 }
-
-.boss .name,
-.boss .sub {
-  display: inline-block;
-  white-space: nowrap;
-  overflow: visible;
-  text-overflow: unset;
-  word-break: keep-all;
-}
-
 .boss .name {
-  font-weight: 600;
-  font-size: clamp(13px, 1.4vw, 15px);
+  font-weight: 700;
+  color: #e6fbff;
+  text-shadow: 0 0 10px rgba(0,255,255,0.12);
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
 .boss .sub {
-  font-size: clamp(11px, 1.1vw, 13px);
   color: var(--muted);
+  font-size: 12px;
 }
-.boss .buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  min-width: 140px;
-}
+
+/* buttons inside boss rows */
+.boss .buttons { display:flex; gap:8px; align-items:center; }
+/* === BOSS BUTTONS WITH GLOW EFFECT === */
 .boss button {
-  flex: 1 1 auto;
   padding: 6px 8px;
-  min-width: 70px;
-  font-size: 13px;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-}
-.boss button:hover { background: rgba(255,255,255,0.08); }
-.boss .killBtn.active { border-color:var(--accent); box-shadow:0 0 10px var(--accent); color:var(--accent); }
-
-/* timer row */
-.timer { display:flex; align-items:center; justify-content:space-between; padding:10px; border-radius:8px; background: rgba(0,0,0,0.2); min-width:0; gap:8px; }
-.timer.ready { border:1px solid var(--accent); color:var(--accent); animation: pulseGlow 1.8s ease-in-out infinite; }
-@keyframes pulseGlow { 0%{box-shadow:0 0 6px rgba(125,211,252,0.35);}50%{box-shadow:0 0 16px rgba(125,211,252,0.8);}100%{box-shadow:0 0 6px rgba(125,211,252,0.35);} }
-
-/* sticky next boss */
-.next {
-	font-size:clamp(14px,1.8vw,18px); 
-	font-weight: bold;
-	color:var(--highlight); position:sticky; 
-	top:0; 
-	background: rgba(11,18,32,0.9); 
-	backdrop-filter: blur(4px); 
-	padding:6px 10px; 
-	border-radius:8px; 
-	z-index:50;
-	text-shadow: 0 0 8px red, 0 0 16px red;
+  border: 1px solid rgba(0,255,255,0.08);
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+  color: #e6eef6;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 4px rgba(0,255,255,0.05);
 }
 
-/* footer */
-footer { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,13px); text-align:center; }
-
-/* responsive */
-@media (max-width:900px) { .grid { grid-template-columns: 1fr; }
-
-/* Make boss and timer cards equal height */
-.grid {
-  align-items: stretch;
+/* Active (Killed) button style */
+.boss button.killBtn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 12px rgba(0,255,255,0.2);
 }
 
-.grid > .card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-} .boss-list { grid-template-columns: 1fr; } }
-@media (max-width:600px) { body { padding:8px; } .controls { justify-content:center; } button { padding:6px 10px; } }
-
-/* === SETTINGS DROPDOWN === */
-.settings {
-  position: relative;
+/* Hover glow effect for all buttons */
+.boss button:hover {
+  transform: translateY(-2px) scale(1.05);
+  background: rgba(0,255,255,0.08);
+  border-color: rgba(0,255,255,0.4);
+  box-shadow:
+    0 0 10px rgba(0,255,255,0.25),
+    0 0 20px rgba(0,255,255,0.15);
+  color: var(--accent);
 }
 
-/* Settings button */
-#settingsBtn {
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.02);
+
+/* timer rows */
+.timer {
   display: flex;
   align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.04), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.02);
 }
+.timer.ready { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px rgba(0,255,255,0.06); }
 
-#settingsBtn:hover {
-  background: rgba(255,255,255,0.05);
-}
-
-/* Gear icon only rotates */
-.gear-icon {
-  display: inline-block;
-  transition: transform 0.4s ease;
-}
-
-.gear-icon.rotating {
-  transform: rotate(90deg);
-}
-
-/* Dropdown menu (hidden by default) */
-#settingsMenu {
-  display: none;
-  position: absolute;
-  right: 0;
-  top: 120%;
-  background: rgba(15,23,36,0.95);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 8px;
-  flex-direction: column;
-  gap: 6px;
-  z-index: 999;
-  white-space: nowrap;        /* keeps text on one line */
-  width: fit-content;         /* auto-adjust width to text */
-  align-self: flex-start;     /* align neatly inside dropdown */
-  min-width: 100%;            /* fills dropdown width if text is shorter */
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-/* Show state */
-#settingsMenu.show {
-  display: flex;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Individual menu buttons */
-#settingsMenu button {
-  text-align: right;
-  width: 100%;
-  border: 1px solid rgba(255,255,255,0.06);
+/* === CLEAR BUTTON — TRANSPARENT RED STYLE === */
+.clearBtnSmall {
+  padding: 6px 8px;
+  background: rgba(255, 80, 80, 0.15);
+  color: #ffaaaa;
+  border: 1px solid rgba(255, 80, 80, 0.25);
   border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.clearBtnSmall:hover {
+  background: rgba(255, 80, 80, 0.25);
+  border-color: rgba(255, 100, 100, 0.5);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(255, 80, 80, 0.4);
+  transform: translateY(-1px) scale(1.05);
+}
+
+
+
+/* modal */
+#timeModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+#timeModal .modal-content {
+  background: var(--card);
+  padding: 18px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  width: 320px;
+  color: #e6eef6;
+}
+#timeModal input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  background: rgba(11,18,32,0.85);
+  border: 1px solid rgba(0,255,255,0.08);
+  border-radius: 6px;
+  color: #e6eef6;
+}
+#timeModal button {
+  margin-top: 10px;
   padding: 8px 10px;
-  background: rgba(255,255,255,0.02);
-  transition: background 0.2s;
+  border-radius: 6px;
+  border: none;
+  background: linear-gradient(90deg, rgba(0,255,255,0.12), rgba(0,255,255,0.06));
+  color: #e6eef6;
   cursor: pointer;
 }
-
-#settingsMenu button:hover {
-  background: rgba(255,255,255,0.08);
-  transform: scale(1.02);
-}
-
-  </style>
+</style>
 </head>
+
 <body>
-  <div class="wrap">
-    <header>
-  <h1>LORDNINE FIELD BOSS TIMER</h1>
-  <div class="settings">
-    <button id="settingsBtn">
-      <span class="gear-icon">⚙️</span> Settings
-    </button>
-    <div class="settings-menu" id="settingsMenu">
-      <button id="resetAll">Reset All Timers</button>
-      <button id="importBtn">Import JSON</button>
-      <button id="exportBtn">Export JSON</button>
-      <button id="setWebhook">Discord Webhook URL</button>
-      <button id="testWebhook">Test Webhook</button>
-    </div>
+<header>
+  <div>
+    <h1>LORDNINE FIELD BOSS TIMER</h1>    
+	  </div>
+	  <div>
+		<button id="settingsBtn" aria-label="Settings">
+		  <img src="https://cdn-icons-png.flaticon.com/512/3524/3524659.png" class="gear-icon" />
+		</button>
+	  </div>
+
+
+  <div id="settingsMenu" class="">
+    <button id="resetAll">Reset All Timers</button>
+    <button id="exportBtn">Export JSON</button>
+    <button id="importBtn">Import JSON</button>
+    <button id="setWebhook">Discord Webhook URL</button>
+    <button id="testWebhook">Test Webhook</button>
   </div>
 </header>
 
-<!-- === BOSSES PANEL === -->
-    <div class="grid">
-      <div class="card">
-        <div class="boss-header">
-		  <div class="boss-header-text">
-			<h3>Bosses</h3>
-			<p>Mark it dead — or set a custom killed time.</p>
-		  </div>
-		  <input type="text" id="bossSearch" placeholder="Search boss...">
-		</div>
-		<div class="boss-list" id="bossList"></div>
-		<footer>Created by: [DFck]Tadatokichi of Ricardo01</footer>
-      </div>
+<div class="wrap">
+  <div class="panel-layout">
+    <!-- LEFT SIDE -->
+    <div class="left-panel card panel">
+	  <div class="panel-header">
+		<h3 class="panel-title">BOSS LIST</h3>
+		<input id="bossSearch" placeholder="Search boss..." />
+	  </div>
+	  <div id="bossList" aria-live="polite"></div>
+	  <footer style="padding:10px 12px; color:var(--muted); font-size:12px;">
+		Tip: click "Mark Dead" when a boss dies, or use "Set Time".
+	  </footer>
+	</div>
 
-      <div class="card">
-        <h3>Active Timers</h3>
-        <div style="margin:8px 0" class="next">Next Boss: <span id="nextBoss">Calculating...</span></div>
-        <div class="timers" id="timers"></div>        
-      </div>
-    </div>
-  </div>
 
-  <!-- Manual Kill Time Modal -->
-  <div id="timeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000;">
-    <div style="background:#0b1220; padding:20px; border-radius:12px; width:320px; color:#e6eef6; box-shadow:0 0 20px rgba(0,0,0,0.4);">
-      <h3 style="margin-top:0; font-size:18px;">Set Killed Time</h3>
-      <p id="modalBossName" style="font-size:14px; color:var(--muted); margin-bottom:8px;"></p>
-      <input type="datetime-local" id="killTimeInput" style="width:100%; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); background:#0f1724; color:#e6eef6;">
-      <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
-        <button id="cancelTimeBtn" style="padding:6px 10px;">Cancel</button>
-        <button id="saveTimeBtn" style="padding:6px 10px;">Save</button>
+    <!-- RIGHT SIDE -->
+    <div class="right-side">
+      <div class="card next" id="nextBoss">Next Boss: Calculating...</div>
+
+      <div class="card panel">
+        <h3 class="panel-title">ACTIVE TIMERS</h3>
+        <div id="timers" aria-live="polite"></div>
+        <footer style="padding:10px 12px; color:var(--muted); font-size:12px;">
+          Next spawns will auto-advance; Discord alerts optional.
+        </footer>
       </div>
     </div>
   </div>
+</div>
 
+<!-- Manual Kill Time Modal -->
+<div id="timeModal">
+  <div class="modal-content">
+    <h3 id="modalBossName" style="margin:0 0 8px 0; font-size:16px;"></h3>
+    <p style="color:var(--muted); margin:0 0 8px 0;">Set custom killed time:</p>
+    <input type="datetime-local" id="killTimeInput" />
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+      <button id="cancelTimeBtn">Cancel</button>
+      <button id="saveTimeBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- FULL SCRIPT BELOW -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -478,15 +696,17 @@ settingsMenu.querySelectorAll('button').forEach(btn => {
     { id: 'Benji', name: 'Benji', weeklyRespawns: [{ day:0, hour:22, minute:0 }] }
   ];
 
-  function formatSec(s){
-    if (s <= 0) return 'Ready';
-    const d = Math.floor(s/86400); s %= 86400;
-    const h = Math.floor(s/3600); s %= 3600;
-    const m = Math.floor(s/60); const sec = s%60;
-    if (d>0) return `${d}d ${String(h).padStart(2,'0')}h`;
-    if (h>0) return `${h}h ${String(m).padStart(2,'0')}m`;
-    return `${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`;
-  }
+  function formatSec(s) {
+	  if (s <= 0) return 'Ready';
+	  const d = Math.floor(s / 86400); s %= 86400;
+	  const h = Math.floor(s / 3600); s %= 3600;
+	  const m = Math.floor(s / 60); const sec = s % 60;
+
+	  if (d > 0) return `${d}d ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`;
+	  if (h > 0) return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`;
+	  return `${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`;
+	}
+
 
   function loadTimers(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; } }
   function saveTimers(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(timers)); }
@@ -541,7 +761,28 @@ settingsMenu.querySelectorAll('button').forEach(btn => {
     renderAll();
   }
 
-  function resetAll(){ timers = {}; saveTimers(); renderAll(); }
+  function resetAll() {
+	  // Keep only weekly bosses
+	  const preserved = {};
+
+	  for (const boss of BOSSES) {
+		if (boss.weeklyRespawns) {
+		  const existing = timers[boss.id];
+		  // if timer exists, keep it — else, recompute next weekly spawn
+		  preserved[boss.id] = existing || {
+			endTime: getNextWeeklyRespawn(boss.weeklyRespawns),
+			startedAt: Date.now(),
+			weekly: true,
+			notifiedSoon: false
+		  };
+		}
+	  }
+
+	  timers = preserved; // overwrite with only weekly bosses
+	  saveTimers();
+	  renderAll();
+	}
+
 
   // --- Manual time modal
   let currentBossForTime = null;
@@ -599,27 +840,33 @@ settingsMenu.querySelectorAll('button').forEach(btn => {
   // --- Render functions
   function renderBossList() {
     bossListEl.innerHTML = '';
-    for (const b of BOSSES) {
-      const isActive = timers[b.id] && timers[b.id].endTime > Date.now();
-      const node = document.createElement('div');
-      node.className = 'boss';
-      node.innerHTML = `
-        <div class="meta">
-          <div class="name">${b.name}</div>
-          <div class="sub">Respawn: ${
-            b.weeklyRespawns
-              ? b.weeklyRespawns.map(r => `${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][r.day]} ${String(r.hour).padStart(2,'0')}:${String(r.minute).padStart(2,'0')}`).join(', ')
-              : (b.respawn / 3600) + ' hr'
-          }</div>
-        </div>
-        <div class="buttons">
-          <button data-id="${b.id}" class="killBtn ${isActive ? 'active' : ''}">${isActive ? 'Killed' : 'Mark Dead'}</button>
-          <button data-id="${b.id}" class="setTimeBtn">Set Time</button>
-          
-        </div>
-      `;
-      bossListEl.appendChild(node);
-    }
+		for (const b of BOSSES) {
+	  const isWeekly = !!b.weeklyRespawns;
+	  const isActive = timers[b.id] && timers[b.id].endTime > Date.now();
+	  const node = document.createElement('div');
+	  node.className = 'boss' + (isWeekly ? ' weekly' : '');
+
+	  const respawnText = isWeekly
+		? b.weeklyRespawns.map(r =>
+			`${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][r.day]} ${String(r.hour).padStart(2,'0')}:${String(r.minute).padStart(2,'0')}`
+		  ).join(', ')
+		: (b.respawn / 3600) + ' hr';
+
+	  node.innerHTML = `
+		<div class="meta">
+		  <div class="name">${b.name}</div>
+		  <div class="sub">Respawn: ${respawnText}</div>
+		</div>
+		${isWeekly ? '' : `
+		<div class="buttons">
+		  <button data-id="${b.id}" class="killBtn ${isActive ? 'active' : ''}">${isActive ? 'Killed' : 'Mark Dead'}</button>
+		  <button data-id="${b.id}" class="setTimeBtn">Set Time</button>
+		</div>`}
+	  `;
+
+	  bossListEl.appendChild(node);
+	}
+
     bossListEl.querySelectorAll('.killBtn').forEach(btn => btn.addEventListener('click', e => startTimer(e.currentTarget.dataset.id)));
     bossListEl.querySelectorAll('.clearBtn').forEach(btn => btn.addEventListener('click', e => clearTimer(e.currentTarget.dataset.id)));
     bossListEl.querySelectorAll('.setTimeBtn').forEach(btn => btn.addEventListener('click', e => openTimeModal(e.currentTarget.dataset.id)));
@@ -670,12 +917,39 @@ settingsMenu.querySelectorAll('button').forEach(btn => {
     }
     const soon = upcoming[0];
     const seconds = Math.round((soon.endTime - Date.now()) / 1000);
-    nextBossEl.textContent = `${soon.boss.name}\n[${formatSec(Math.max(0, seconds))}] `;
+    // Update Next Boss panel content
+	const oldNameEl = nextBossEl.querySelector(".boss-name");
+	const oldName = oldNameEl ? oldNameEl.textContent : "";
+
+	nextBossEl.innerHTML = `
+	  <div class="boss-name">${soon.boss.name}</div>
+	  <div class="time-remaining">${formatSec(Math.max(0, seconds))}</div>
+	`;
+
+	// Flash animation when boss changes
+	if (soon.boss.name !== oldName) {
+	  const newNameEl = nextBossEl.querySelector(".boss-name");
+	  newNameEl.classList.add("flash");
+	  setTimeout(() => newNameEl.classList.remove("flash"), 600);
+	}
+
+
   }
 
   function renderAll() {
-    renderBossList();
-    renderTimers();
+	renderBossList();
+	renderTimers();
+
+// --- Force Weekly Bosses to Appear in Active Timers Immediately ---
+	BOSSES.filter(boss => boss.type === "weekly").forEach(boss => {
+	  if (!timers[boss.id]) {
+		timers[boss.id] = {
+		  endTime: Date.now() + 7 * 24 * 60 * 60 * 1000, // placeholder 7 days
+		  type: "weekly",
+		};
+	  }
+	});
+	renderTimers();
     computeNextBoss();
   }
 
