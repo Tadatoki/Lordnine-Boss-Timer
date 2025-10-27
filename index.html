@@ -432,6 +432,7 @@ settingsMenu.querySelectorAll('button').forEach(btn => {
   const STORAGE_KEY = 'ln_boss_timers_v2';
   const WEBHOOK_KEY = 'ln_discord_webhook';
   let timers = loadTimers();
+  let justLoaded = true;
   let webhookUrl = localStorage.getItem(WEBHOOK_KEY) || '';
 
   const bossListEl = document.getElementById('bossList');
@@ -678,7 +679,7 @@ settingsMenu.querySelectorAll('button').forEach(btn => {
     computeNextBoss();
   }
 
-  // --- Timer loop: update countdowns only
+ // --- Timer loop: update countdowns only
 setInterval(() => {
   const now = Date.now();
   let changed = false;
@@ -688,6 +689,9 @@ setInterval(() => {
     const boss = BOSSES.find(b => b.id === id);
     if (!boss) continue;
     const remainingMs = info.endTime - now;
+
+    // 🚫 Prevent Discord messages immediately after reopening the page
+    if (justLoaded) continue;
 
     // 5-minute warning
     if (remainingMs <= 5 * 60 * 1000 && remainingMs > 0 && !info.notifiedSoon) {
@@ -701,7 +705,7 @@ setInterval(() => {
     if (info.endTime <= now) {
       const respawnTime = new Date(info.endTime).toLocaleString();
       sendToDiscord(`@everyone \n🕒 **${boss.name}** has respawned!\n(Respawn time: **${respawnTime}**)`);
-      if (boss.weeklyRespawns) {
+    if (boss.weeklyRespawns) {
         const nextTime = getNextWeeklyRespawn(boss.weeklyRespawns);
         timers[id] = { endTime: nextTime, startedAt: now, weekly: true, notifiedSoon: false };
       } else {
@@ -719,6 +723,8 @@ setInterval(() => {
   computeNextBoss();
 }, 1000);
 
+	// Allow Discord alerts again after 5 seconds
+setTimeout(() => { justLoaded = false; }, 5000);
 
   // --- Controls: reset/export/webhook/test
   resetAllBtn.addEventListener('click', () => { if (confirm('Reset all timers?')) resetAll(); });
